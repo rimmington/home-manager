@@ -21,6 +21,15 @@ in
     programs.fish = {
       enable = mkEnableOption "Fish shell";
 
+      abbreviations = mkOption {
+        default = {};
+        type = types.attrsOf types.string;
+        example = { l = "ls -lah"; };
+        description = ''
+          Abbreviations, using abbr, not stored in a univeral variable.
+        '';
+      };
+
       sessionVariables = mkOption {
         default = {};
         type = types.attrs;
@@ -48,6 +57,10 @@ in
         ${sessionVarsStr}
 
         if status --is-interactive
+            ${optionalString (cfg.abbreviations != {}) ''
+            set -g fish_user_abbreviations $fish_user_abbreviations
+                ${concatStringsSep "\n    " (mapAttrsToList (n: c: "abbr -a ${n} \"${toString c}\"") cfg.abbreviations)}
+            ''}
             ${cfg.initExtra}
         end
     '';
